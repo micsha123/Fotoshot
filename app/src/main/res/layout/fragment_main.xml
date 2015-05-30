@@ -13,10 +13,27 @@
         android:id="@+id/checkbutton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
-    <ImageView
-        android:id="@+id/imageview"
 
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content">
 
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:id="@+id/textImage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/imageView"
+            android:layout_alignRight="@+id/imageView"
+            android:padding="14dp"
+            android:background="#67000000"
+            android:gravity="center"
+            android:textColor="@color/background_floating_material_light"
+            android:textSize="18sp"
+            android:textStyle="bold"/>
+    </RelativeLayout>
 </LinearLayout>

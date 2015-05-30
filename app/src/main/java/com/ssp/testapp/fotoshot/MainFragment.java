@@ -49,11 +49,10 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
         Button button = (Button) rootView.findViewById(R.id.checkbutton);
-        imageView = (ImageView) rootView.findViewById(R.id.imageview);
+        imageView = (ImageView) rootView.findViewById(R.id.imageView);
         try {
             images = parseJSON();
         } catch (Exception e) {
-            images = new ArrayList<Image>();
             Log.e("VASSA", "Error loading crimes: ", e);
         }
         button.setOnClickListener(new View.OnClickListener() {
@@ -151,6 +150,5 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             }
             return false;
         }
-
     }
 }
