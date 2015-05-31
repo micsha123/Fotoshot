@@ -2,6 +2,7 @@ package com.ssp.testapp.fotoshot;
 
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
@@ -33,6 +34,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
@@ -105,13 +109,13 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                for (int i = 0; i < images.size(); i++){
+                for (int i = 0; i < images.size(); i++) {
                     // preloading images to cache
                     Picasso.with(getActivity()).load(images.get(i).getUrl()).fetch();
                 }
                 //enable autoswitch
-                if(enableAutoswitch){
-                    if(handlerFlag == 1){
+                if (enableAutoswitch) {
+                    if (handlerFlag == 1) {
                         button.setText(getActivity().getString(R.string.start));
                         handlerFlag = 0;
                         handler.removeCallbacks(runnable);
@@ -120,7 +124,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                         button.setText(getActivity().getString(R.string.stop));
                         handler.post(runnable);
                     }
-                } else{
+                } else {
                     swipeImage();
                 }
             }
@@ -143,14 +147,14 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         @Override
         public void run() {
             swipeImage();
-            handler.postDelayed(runnable, intervalAutoswitch*1000);
+            handler.postDelayed(runnable, intervalAutoswitch * 1000);
         }
     };
 
     /* method for downloading and setting pics to imageview with
      custom animations */
-    private void swipeImage(){
-        if(advOrder.equals("1")){
+    private void swipeImage() {
+        if (advOrder.equals("1")) {
             Random rand = new Random();
             orderNum = rand.nextInt(images.size());  // random picture
         } else {
@@ -165,14 +169,14 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         int animNumber;
         Techniques techs;
         //gettin' random animation via daimajia/AndroidViewAnimations library
-        if(advAnimation.equals("8")){
+        if (advAnimation.equals("8")) {
             Random rand = new Random();
             // 7 - number of animations
             animNumber = rand.nextInt(images.size()) % 7;
-        } else{
+        } else {
             animNumber = Integer.parseInt(advAnimation);
         }
-        switch(animNumber){
+        switch (animNumber) {
             case 0:
                 techs = Techniques.FadeIn;
                 break;
@@ -224,12 +228,12 @@ public class MainFragment extends Fragment implements View.OnClickListener {
 
 
         // for ordered array
-        if(advOrder.equals("0")){
+        if (advOrder.equals("0")) {
             int direction;
-            if(swipeLeft){
+            if (swipeLeft) {
                 direction = 1;
-            } else{
-                if(orderNum == 0){
+            } else {
+                if (orderNum == 0) {
                     orderNum = images.size();
                 }
                 direction = -1;
@@ -248,11 +252,11 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             try {
                 if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
                     return false;
-                if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                if (e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
 //                    Toast.makeText(getActivity(), "Left Swipe", Toast.LENGTH_SHORT).show();
                     swipeLeft = true;
                     swipeImage();
-                }  else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                } else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
 //                    Toast.makeText(getActivity(), "Right Swipe", Toast.LENGTH_SHORT).show();
                     swipeLeft = false;
                     swipeImage();
@@ -263,19 +267,19 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         }
     }
 
-    private void sortArray(){
-        if(!sorted){
+    private void sortArray() {
+        if (!sorted) {
             ImageComparator comparator = new ImageComparator();
             Collections.sort(images, comparator);
             sorted = true;
         }
     }
 
-    private void setFavoriteText(final int item){
+    private void setFavoriteText(final int item) {
         AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
 
         final EditText edittext = new EditText(getActivity());
-        if(images.get(item).getComment() != null){
+        if (images.get(item).getComment() != null) {
             edittext.setText(images.get(item).getComment());
         }
         alert.setMessage(getActivity().getString(R.string.add_text));
@@ -299,8 +303,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         alert.show();
     }
 
-    private void refreshWhenFavourites(final int currentButton){
-        if(images.get(currentButton).isFavourite()){
+    private void refreshWhenFavourites(final int currentButton) {
+        if (images.get(currentButton).isFavourite()) {
             textOnPic.setVisibility(View.VISIBLE);
             textOnPic.setText(images.get(currentButton).getComment());
             buttonFav.setText(getActivity().getString(R.string.del_fav));
@@ -311,7 +315,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                     refreshWhenFavourites(currentButton);
                 }
             });
-        } else{
+        } else {
             textOnPic.setVisibility(View.INVISIBLE);
             buttonFav.setText(getActivity().getString(R.string.add_fav));
             buttonFav.setOnClickListener(new View.OnClickListener() {
@@ -359,6 +363,40 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                 reader.close();
         }
         return images;
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        try {
+            saveImagesJSON(images);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /* in the task on test app were said about json located in resources of .apk (which only readble),
+    so it's non writable, but it is necessary feature so I write here method to save changes
+    which called in onPause() method..
+     */
+    public void saveImagesJSON(ArrayList<Image> images) throws JSONException, IOException {
+
+        JSONArray array = new JSONArray();
+        for (Image i : images)
+            array.put(i.toJSON());
+
+        Writer writer = null;
+        try {
+            OutputStream out = getActivity()
+                    .openFileOutput("images.json", Context.MODE_PRIVATE);
+            writer = new OutputStreamWriter(out);
+            writer.write(array.toString());
+        } finally {
+            if (writer != null)
+                writer.close();
+        }
     }
 
 }

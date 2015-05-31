@@ -43,10 +43,6 @@ public class Image {
         return index;
     }
 
-    public void setIndex(int index) {
-        this.index = index;
-    }
-
     public String getComment() {
         return comment;
     }
@@ -65,11 +61,13 @@ public class Image {
 
     public JSONObject toJSON() throws JSONException {
         JSONObject json = new JSONObject();
+        json.put(JSON_ID, Integer.toString(id));
+        json.put(JSON_INDEX, Integer.toString(index));
+        json.put(JSON_URL, url);
         json.put(JSON_FAV, Boolean.toString(favourite));
         json.put(JSON_COMMENT, comment);
         return json;
     }
-
 }
 
 class ImageComparator implements Comparator<Image> {
