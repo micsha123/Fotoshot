@@ -1,0 +1,57 @@
+<resources>
+    <string name="title_activity_settings">Settings</string>
+
+    <string name="pref_header_general">General</string>
+
+    <string name="pref_title_autoswitch">Enable autoswitch</string>
+    <string name="pref_description_autoswitch">Disable it if you want swipe by yourself</string>
+    <string name="pref_title_interval">Choose interval for switch</string>
+
+    <string name="pref_header_advanced">Advanced settings</string>
+
+    <string name="pref_title_order">Choose best order</string>
+    <string-array name="pref_order_titles">
+        <item>Index order</item>
+        <item>Random</item>
+    </string-array>
+    <string-array name="pref_order_values">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+
+    <string name="pref_title_favourites">Better to show</string>
+    <string-array name="pref_favourites_titles">
+        <item>All photos</item>
+        <item>Only favourite photos</item>
+    </string-array>
+        <string-array name="pref_favourites_values">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+
+    <string name="pref_title_animation">My lovely anim is..</string>
+    <string-array name="pref_animation_titles">
+        <item>Fade In</item>
+        <item>Roll In</item>
+        <item>Stand Up</item>
+        <item>Zoom In</item>
+        <item>Bounce In</item>
+        <item>Slide In Down</item>
+        <item>Tada!</item>
+        <item>All and random</item>
+        <item>Nothing</item>
+    </string-array>
+    <string-array name="pref_animation_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+    </string-array>
+
+</resources>

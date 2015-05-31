@@ -48,7 +48,9 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        // "Start" button
         Button button = (Button) rootView.findViewById(R.id.checkbutton);
+        // Slideshow imageview
         imageView = (ImageView) rootView.findViewById(R.id.imageView);
         try {
             images = parseJSON();
@@ -58,9 +60,15 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                for (int i = 0; i < images.size(); i++){
+//                    Picasso.with(getActivity()).load(images.get(i).getUrl());
+                    // preloading images to cache
+                    Picasso.with(getActivity()).load(images.get(i).getUrl()).fetch();
+                }
                 swipeImage();
             }
         });
+        // gestures for swiping
         imageView.setOnClickListener(this);
         gestureDetector = new GestureDetector(getActivity(), new MyGestureDetector());
         gestureListener = new View.OnTouchListener() {
@@ -104,6 +112,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         Picasso.with(getActivity()).load(images.get(randomNum).getUrl()).resize(imageView.getWidth(), imageView.getWidth())
                 .centerCrop().into(imageView);
         Techniques techs;
+        randomNum = rand.nextInt(images.size());
+        //gettin' random animation via daimajia/AndroidViewAnimations library
         switch(randomNum % 7){
             case 0:
                 techs = Techniques.FadeIn;
@@ -140,10 +150,10 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                 if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
                     return false;
                 if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-                    Toast.makeText(getActivity(), "Left Swipe", Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(getActivity(), "Left Swipe", Toast.LENGTH_SHORT).show();
                     swipeImage();
                 }  else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-                    Toast.makeText(getActivity(), "Right Swipe", Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(getActivity(), "Right Swipe", Toast.LENGTH_SHORT).show();
                     swipeImage();
                 }
             } catch (Exception e) {

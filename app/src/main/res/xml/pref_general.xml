@@ -1,0 +1,19 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <CheckBoxPreference
+        android:key="autoswitch_checkbox"
+        android:title="@string/pref_title_autoswitch"
+        android:summary="@string/pref_description_autoswitch"
+        android:defaultValue="true"/>
+
+    <com.vanniktech.vntnumberpickerpreference.VNTNumberPickerPreference
+        android:dependency="autoswitch_checkbox"
+        xmlns:vntnumberpickerpreference="http://schemas.android.com/apk/res-auto"
+        android:defaultValue="5"
+        android:key="autoswitch_interval"
+        android:title="@string/pref_title_interval"
+        vntnumberpickerpreference:maxValue="60"
+        vntnumberpickerpreference:minValue="0"
+        vntnumberpickerpreference:setWrapSelectorWheel="true"/>
+
+</PreferenceScreen>

@@ -1,0 +1,30 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <ListPreference
+        android:key="adv_order"
+        android:title="@string/pref_title_order"
+        android:entries="@array/pref_order_titles"
+        android:entryValues="@array/pref_order_values"
+        android:defaultValue="0"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null" />
+
+    <ListPreference
+        android:key="adv_favourites"
+        android:title="@string/pref_title_favourites"
+        android:entries="@array/pref_favourites_titles"
+        android:entryValues="@array/pref_favourites_values"
+        android:defaultValue="0"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null" />
+
+    <ListPreference
+        android:key="sync_frequency"
+        android:title="@string/pref_title_animation"
+        android:entries="@array/pref_animation_titles"
+        android:entryValues="@array/pref_animation_values"
+        android:defaultValue="0"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null" />
+
+</PreferenceScreen>
