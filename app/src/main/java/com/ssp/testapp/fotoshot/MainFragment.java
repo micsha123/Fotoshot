@@ -1,8 +1,11 @@
 package com.ssp.testapp.fotoshot;
 
 import android.app.Fragment;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -11,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.daimajia.androidanimations.library.Techniques;
@@ -27,29 +31,56 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
-
 
 public class MainFragment extends Fragment implements View.OnClickListener {
 
+    private Button button;
+    private TextView textOnPic;
+
     private ArrayList<Image> images;
 
+    // for preferences
+    private boolean enableAutoswitch;
+    private String advOrder;
+    private String advFavourites;
+    private String advAnimation;
+    private int intervalAutoswitch;
+
+    // for gestures
     private static final int SWIPE_MIN_DISTANCE = 10;
     private static final int SWIPE_MAX_OFF_PATH = 250;
     private static final int SWIPE_THRESHOLD_VELOCITY = 200;
     private GestureDetector gestureDetector;
     View.OnTouchListener gestureListener;
 
-    ImageView imageView;
+    private boolean sorted = false;
+    private int orderNum;
+    private Handler handler;
+    private int handlerFlag;
+    private boolean swipeLeft = true;
+    // for slides
+    private ImageView imageView;
 
     public MainFragment() {
+    }
+
+    @Override
+    public void onStart() {
+        getPrefs();
+        super.onStart();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
         // "Start" button
-        Button button = (Button) rootView.findViewById(R.id.checkbutton);
+        button = (Button) rootView.findViewById(R.id.checkbutton);
+        button.setText("Start");
+
+        // textView on pictures for favourites
+        textOnPic = (TextView) rootView.findViewById(R.id.textImage);
         // Slideshow imageview
         imageView = (ImageView) rootView.findViewById(R.id.imageView);
         try {
@@ -57,17 +88,33 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         } catch (Exception e) {
             Log.e("VASSA", "Error loading crimes: ", e);
         }
+
+        handler = new Handler();
+
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 for (int i = 0; i < images.size(); i++){
-//                    Picasso.with(getActivity()).load(images.get(i).getUrl());
                     // preloading images to cache
                     Picasso.with(getActivity()).load(images.get(i).getUrl()).fetch();
                 }
-                swipeImage();
+                //enable autoswitch
+                if(enableAutoswitch){
+                    if(handlerFlag == 1){
+                        button.setText("Start");
+                        handlerFlag = 0;
+                        handler.removeCallbacks(runnable);
+                    } else {
+                        handlerFlag = 1;
+                        button.setText("Stop");
+                        handler.post(runnable);
+                    }
+                } else{
+                    swipeImage();
+                }
             }
         });
+
         // gestures for swiping
         imageView.setOnClickListener(this);
         gestureDetector = new GestureDetector(getActivity(), new MyGestureDetector());
@@ -80,6 +127,122 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         return rootView;
     }
 
+    // task for autoswitch
+    final Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            swipeImage();
+            handler.postDelayed(runnable, intervalAutoswitch*1000);
+        }
+    };
+
+    /* method for downloading and setting pics to imageview with
+     custom animations */
+    private void swipeImage(){
+        if(advOrder.equals("1")){
+            Random rand = new Random();
+            orderNum = rand.nextInt(images.size());  // random picture
+        } else {
+            sortArray();
+        }
+        Toast.makeText(getActivity(), Integer.toString(orderNum), Toast.LENGTH_SHORT).show();
+        Picasso.with(getActivity()).load(images.get(orderNum).getUrl()).resize(imageView.getWidth(), imageView.getWidth())
+                .centerCrop().into(imageView);
+
+        int animNumber;
+        Techniques techs;
+        //gettin' random animation via daimajia/AndroidViewAnimations library
+        if(advAnimation.equals("8")){
+            Random rand = new Random();
+            animNumber = rand.nextInt(images.size()) % 7;
+        } else{
+            animNumber = Integer.parseInt(advAnimation);
+        }
+        switch(animNumber){
+            case 0:
+                techs = Techniques.FadeIn;
+                break;
+            case 1:
+                techs = Techniques.RollIn;
+                break;
+            case 2:
+                techs = Techniques.StandUp;
+                break;
+            case 3:
+                techs = Techniques.ZoomIn;
+                break;
+            case 4:
+                techs = Techniques.BounceIn;
+                break;
+            case 5:
+                techs = Techniques.SlideInDown;
+                break;
+            default:
+                techs = Techniques.Tada;
+        }
+        YoYo.with(techs).duration(700).playOn(imageView);
+        if(images.get(orderNum).isFavourite()){
+            textOnPic.setVisibility(View.VISIBLE);
+            textOnPic.setText(images.get(orderNum).getComment());
+        } else{
+            textOnPic.setVisibility(View.INVISIBLE);
+        }
+        if(advOrder.equals("0")){
+            int direction;
+            if(swipeLeft){
+                direction = 1;
+            } else{
+                direction = -1;
+            }
+            orderNum = Math.abs((orderNum + direction) % images.size()); // needs for both directions swiping
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+    }
+
+    class MyGestureDetector extends GestureDetector.SimpleOnGestureListener {
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            try {
+                if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
+                    return false;
+                if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+//                    Toast.makeText(getActivity(), "Left Swipe", Toast.LENGTH_SHORT).show();
+                    swipeLeft = true;
+                    swipeImage();
+                }  else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+//                    Toast.makeText(getActivity(), "Right Swipe", Toast.LENGTH_SHORT).show();
+                    swipeLeft = false;
+                    swipeImage();
+                }
+            } catch (Exception e) {
+            }
+            return false;
+        }
+    }
+
+    private void sortArray(){
+        if(!sorted){
+            ImageComparator comparator = new ImageComparator();
+            Collections.sort(images, comparator);
+            sorted = true;
+        }
+    }
+
+    private void getPrefs() {
+        // Get the xml/preferences.xml preferences
+        SharedPreferences prefs = PreferenceManager
+                .getDefaultSharedPreferences(getActivity().getBaseContext());
+        enableAutoswitch = prefs.getBoolean("autoswitch_checkbox", true);
+        intervalAutoswitch = prefs.getInt("autoswitch_interval", 5);
+        advOrder = prefs.getString("adv_order", "0");
+        advFavourites = prefs.getString("adv_favourites", "0");
+        advAnimation = prefs.getString("adv_animation", "0");
+    }
+
+    // parsing json to Image objects
     private ArrayList<Image> parseJSON() throws IOException, JSONException {
         ArrayList<Image> images = new ArrayList<Image>();
         BufferedReader reader = null;
@@ -105,60 +268,4 @@ public class MainFragment extends Fragment implements View.OnClickListener {
         return images;
     }
 
-    private void swipeImage(){
-        Random rand = new Random();
-        int randomNum = rand.nextInt(images.size());
-        Toast.makeText(getActivity(), Integer.toString(randomNum), Toast.LENGTH_SHORT).show();
-        Picasso.with(getActivity()).load(images.get(randomNum).getUrl()).resize(imageView.getWidth(), imageView.getWidth())
-                .centerCrop().into(imageView);
-        Techniques techs;
-        randomNum = rand.nextInt(images.size());
-        //gettin' random animation via daimajia/AndroidViewAnimations library
-        switch(randomNum % 7){
-            case 0:
-                techs = Techniques.FadeIn;
-                break;
-            case 1:
-                techs = Techniques.RollIn;
-                break;
-            case 2:
-                techs = Techniques.StandUp;
-                break;
-            case 3:
-                techs = Techniques.ZoomIn;
-                break;
-            case 4:
-                techs = Techniques.BounceIn;
-                break;
-            case 5:
-                techs = Techniques.SlideInDown;
-                break;
-            default:
-                techs = Techniques.Tada;
-        }
-        YoYo.with(techs).duration(700).playOn(imageView);
-    }
-
-    @Override
-    public void onClick(View v) {
-    }
-
-    class MyGestureDetector extends GestureDetector.SimpleOnGestureListener {
-        @Override
-        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            try {
-                if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
-                    return false;
-                if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-//                    Toast.makeText(getActivity(), "Left Swipe", Toast.LENGTH_SHORT).show();
-                    swipeImage();
-                }  else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-//                    Toast.makeText(getActivity(), "Right Swipe", Toast.LENGTH_SHORT).show();
-                    swipeImage();
-                }
-            } catch (Exception e) {
-            }
-            return false;
-        }
-    }
 }

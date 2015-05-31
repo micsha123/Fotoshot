@@ -19,7 +19,7 @@
         android:positiveButtonText="@null" />
 
     <ListPreference
-        android:key="sync_frequency"
+        android:key="adv_animation"
         android:title="@string/pref_title_animation"
         android:entries="@array/pref_animation_titles"
         android:entryValues="@array/pref_animation_values"

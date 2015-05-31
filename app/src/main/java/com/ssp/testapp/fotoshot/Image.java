@@ -5,6 +5,8 @@ package com.ssp.testapp.fotoshot;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Comparator;
+
 public class Image {
 
     private static final String JSON_ID = "id";
@@ -19,7 +21,7 @@ public class Image {
     private boolean favourite;
     private String comment;
 
-    public Image(int id, int index, String url){
+    public Image(int id, int index, String url) {
         this.id = id;
         this.index = index;
         this.url = url;
@@ -66,5 +68,20 @@ public class Image {
         json.put(JSON_FAV, Boolean.toString(favourite));
         json.put(JSON_COMMENT, comment);
         return json;
+    }
+
+}
+
+class ImageComparator implements Comparator<Image> {
+
+    @Override
+    public int compare(Image o1, Image o2) {
+        if (o1.getIndex() > o2.getIndex()) {
+            return 1;
+        }
+        if (o1.getIndex() < o2.getIndex()) {
+            return -1;
+        }
+        return 0;
     }
 }
