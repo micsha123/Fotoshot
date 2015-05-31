@@ -1,6 +1,8 @@
 package com.ssp.testapp.fotoshot;
 
+import android.app.AlertDialog;
 import android.app.Fragment;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.os.Bundle;
@@ -13,6 +15,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,6 +40,7 @@ import java.util.Random;
 public class MainFragment extends Fragment implements View.OnClickListener {
 
     private Button button;
+    private Button buttonFav;
     private TextView textOnPic;
 
     private ArrayList<Image> images;
@@ -55,7 +59,9 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     private GestureDetector gestureDetector;
     View.OnTouchListener gestureListener;
 
+    // flags, drugs and so on..
     private boolean sorted = false;
+    int currentButton;
     private int orderNum;
     private Handler handler;
     private int handlerFlag;
@@ -75,9 +81,13 @@ public class MainFragment extends Fragment implements View.OnClickListener {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-        // "Start" button
+        // "Start"/"Stop" button
         button = (Button) rootView.findViewById(R.id.checkbutton);
-        button.setText("Start");
+        button.setText(getActivity().getString(R.string.start));
+
+        // "Favourites" button
+        buttonFav = (Button) rootView.findViewById(R.id.favouritebutton);
+        buttonFav.setVisibility(View.GONE);
 
         // textView on pictures for favourites
         textOnPic = (TextView) rootView.findViewById(R.id.textImage);
@@ -89,6 +99,7 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             Log.e("VASSA", "Error loading crimes: ", e);
         }
 
+        // handler for looping
         handler = new Handler();
 
         button.setOnClickListener(new View.OnClickListener() {
@@ -101,12 +112,12 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                 //enable autoswitch
                 if(enableAutoswitch){
                     if(handlerFlag == 1){
-                        button.setText("Start");
+                        button.setText(getActivity().getString(R.string.start));
                         handlerFlag = 0;
                         handler.removeCallbacks(runnable);
                     } else {
                         handlerFlag = 1;
-                        button.setText("Stop");
+                        button.setText(getActivity().getString(R.string.stop));
                         handler.post(runnable);
                     }
                 } else{
@@ -143,17 +154,20 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             Random rand = new Random();
             orderNum = rand.nextInt(images.size());  // random picture
         } else {
-            sortArray();
+            sortArray();   // sort by index!
         }
         Toast.makeText(getActivity(), Integer.toString(orderNum), Toast.LENGTH_SHORT).show();
         Picasso.with(getActivity()).load(images.get(orderNum).getUrl()).resize(imageView.getWidth(), imageView.getWidth())
                 .centerCrop().into(imageView);
+
+        buttonFav.setVisibility(View.VISIBLE);
 
         int animNumber;
         Techniques techs;
         //gettin' random animation via daimajia/AndroidViewAnimations library
         if(advAnimation.equals("8")){
             Random rand = new Random();
+            // 7 - number of animations
             animNumber = rand.nextInt(images.size()) % 7;
         } else{
             animNumber = Integer.parseInt(advAnimation);
@@ -180,21 +194,47 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             default:
                 techs = Techniques.Tada;
         }
+
         YoYo.with(techs).duration(700).playOn(imageView);
-        if(images.get(orderNum).isFavourite()){
-            textOnPic.setVisibility(View.VISIBLE);
-            textOnPic.setText(images.get(orderNum).getComment());
-        } else{
-            textOnPic.setVisibility(View.INVISIBLE);
-        }
+
+        //
+        currentButton = orderNum;
+//        if(images.get(orderNum).isFavourite()){
+//            textOnPic.setVisibility(View.VISIBLE);
+//            textOnPic.setText(images.get(orderNum).getComment());
+//            buttonFav.setText(getActivity().getString(R.string.del_fav));
+//            buttonFav.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    images.get(currentButton).setFavourite(false);
+//                }
+//            });
+//        } else{
+//            textOnPic.setVisibility(View.INVISIBLE);
+//            buttonFav.setText(getActivity().getString(R.string.add_fav));
+//            buttonFav.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    images.get(currentButton).setFavourite(true);
+//                    setFavoriteText(currentButton);
+//                }
+//            });
+//        }
+        refreshWhenFavourites(currentButton);
+
+
+        // for ordered array
         if(advOrder.equals("0")){
             int direction;
             if(swipeLeft){
                 direction = 1;
             } else{
+                if(orderNum == 0){
+                    orderNum = images.size();
+                }
                 direction = -1;
             }
-            orderNum = Math.abs((orderNum + direction) % images.size()); // needs for both directions swiping
+            orderNum = (orderNum + direction) % images.size(); // needs for swipe in both directions
         }
     }
 
@@ -228,6 +268,59 @@ public class MainFragment extends Fragment implements View.OnClickListener {
             ImageComparator comparator = new ImageComparator();
             Collections.sort(images, comparator);
             sorted = true;
+        }
+    }
+
+    private void setFavoriteText(final int item){
+        AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
+
+        final EditText edittext = new EditText(getActivity());
+        if(images.get(item).getComment() != null){
+            edittext.setText(images.get(item).getComment());
+        }
+        alert.setMessage(getActivity().getString(R.string.add_text));
+        alert.setTitle(getActivity().getString(R.string.add_fav));
+
+        alert.setView(edittext);
+
+        alert.setPositiveButton(R.string.done, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                String text = edittext.getText().toString();
+                images.get(item).setComment(text);
+                refreshWhenFavourites(currentButton);
+            }
+        });
+
+        alert.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+            }
+        });
+
+        alert.show();
+    }
+
+    private void refreshWhenFavourites(final int currentButton){
+        if(images.get(currentButton).isFavourite()){
+            textOnPic.setVisibility(View.VISIBLE);
+            textOnPic.setText(images.get(currentButton).getComment());
+            buttonFav.setText(getActivity().getString(R.string.del_fav));
+            buttonFav.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    images.get(currentButton).setFavourite(false);
+                    refreshWhenFavourites(currentButton);
+                }
+            });
+        } else{
+            textOnPic.setVisibility(View.INVISIBLE);
+            buttonFav.setText(getActivity().getString(R.string.add_fav));
+            buttonFav.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    images.get(currentButton).setFavourite(true);
+                    setFavoriteText(currentButton);
+                }
+            });
         }
     }
 

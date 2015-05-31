@@ -1,4 +1,12 @@
 <resources>
     <string name="app_name">Abode Fotoshot</string>
     <string name="action_settings">Settings</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+    <string name="add_fav">I like it!!!</string>
+    <string name="del_fav">I hate it</string>
+    <string name="add_text">Add some text about photo</string>
+    <string name="done">Done</string>
+    <string name="cancel">Cancel</string>
+
 </resources>
