@@ -201,31 +201,8 @@ public class MainFragment extends Fragment implements View.OnClickListener {
 
         YoYo.with(techs).duration(700).playOn(imageView);
 
-        //
         currentButton = orderNum;
-//        if(images.get(orderNum).isFavourite()){
-//            textOnPic.setVisibility(View.VISIBLE);
-//            textOnPic.setText(images.get(orderNum).getComment());
-//            buttonFav.setText(getActivity().getString(R.string.del_fav));
-//            buttonFav.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    images.get(currentButton).setFavourite(false);
-//                }
-//            });
-//        } else{
-//            textOnPic.setVisibility(View.INVISIBLE);
-//            buttonFav.setText(getActivity().getString(R.string.add_fav));
-//            buttonFav.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    images.get(currentButton).setFavourite(true);
-//                    setFavoriteText(currentButton);
-//                }
-//            });
-//        }
         refreshWhenFavourites(currentButton);
-
 
         // for ordered array
         if (advOrder.equals("0")) {
@@ -398,5 +375,6 @@ public class MainFragment extends Fragment implements View.OnClickListener {
                 writer.close();
         }
     }
-
 }
+
+/* sorry for my bad english */
